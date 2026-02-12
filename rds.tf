@@ -46,12 +46,7 @@ resource "aws_db_instance" "wordpress" {
 
   parameter_group_name = "default.mysql8.0"
   apply_immediately    = true
-  monitoring_interval  = 60
-
-        
-
-
-
-
+  # Disable Enhanced Monitoring
+  monitoring_interval = 0
 
 }

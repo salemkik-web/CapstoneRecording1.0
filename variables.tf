@@ -16,8 +16,6 @@ variable "vpc_cidr" {
 }
 
 variable "db_username" {      
-
-
   default = "admin"
 }
 

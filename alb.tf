@@ -57,7 +57,9 @@ resource "aws_lb_listener" "listener" {
   provisioner "local-exec" {
     command = "sleep 30"
   }
+  
   provisioner "local-exec" {
-    command = "aws elbv2 describe-target-health --target-group-arn ${aws_lb_target_group.tg.arn} --region us-east-1"
-  }
+  command = "aws elbv2 describe-target-health --target-group-arn ${aws_lb_target_group.tg.arn} --region us-west-2"
+}
+
 }
