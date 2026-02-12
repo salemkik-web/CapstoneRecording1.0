@@ -4,7 +4,8 @@ resource "aws_lb" "alb" {
   load_balancer_type = "application"
   subnets            = [aws_subnet.public_1.id, aws_subnet.public_2.id]
   security_groups    = [aws_security_group.alb_sg.id]
-  enable_deletion_protection = false
+  enable_deletion_protection = false    
+  internal = false
   idle_timeout             = 60
 
   tags = {
@@ -43,5 +44,20 @@ resource "aws_lb_listener" "listener" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.tg.arn
+  }
+
+  tags = {
+    Name = "wp-listener"
+  }
+
+  depends_on = [
+    aws_lb.alb,
+    aws_lb_target_group.tg
+  ]
+  provisioner "local-exec" {
+    command = "sleep 30"
+  }
+  provisioner "local-exec" {
+    command = "aws elbv2 describe-target-health --target-group-arn ${aws_lb_target_group.tg.arn} --region us-east-1"
   }
 }

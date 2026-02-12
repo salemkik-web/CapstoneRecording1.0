@@ -15,6 +15,9 @@ resource "aws_security_group" "alb_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = {
+    Name = "alb_sg"
+  }
 }
 
 # EC2 SG
@@ -41,6 +44,11 @@ resource "aws_security_group" "ec2_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+        tags = {
+    Name = "ec2_sg"
+  }       
+
 }
 
 # RDS SG
@@ -60,4 +68,10 @@ resource "aws_security_group" "rds_sg" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+          tags = {
+    Name = "rds_sg"
+  }
+        
+        
 }

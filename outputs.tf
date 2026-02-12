@@ -6,3 +6,13 @@ output "alb_dns_name" {
 output "db_endpoint" {
   value = aws_db_instance.wordpress.address
 }
+
+            output "db_port" {
+  value = aws_db_instance.wordpress.port
+}
+
+ 
+
+
+
+

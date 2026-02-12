@@ -4,6 +4,13 @@ resource "aws_db_subnet_group" "main" {
   tags = {
     Name = "wordpress-db-subnet"
   }
+
+        depends_on = [
+    aws_subnet.private_1,
+    aws_subnet.private_2
+  ]
+
+
 }
 
 resource "aws_db_instance" "wordpress" {
@@ -26,4 +33,25 @@ resource "aws_db_instance" "wordpress" {
   tags = {
     Name = "wordpress-db"
   }
+
+          depends_on = [
+    aws_db_subnet_group.main,
+    aws_security_group.rds_sg
+  ]
+  timeouts {
+    create = "40m"
+    delete = "40m"
+    update = "40m"
+  }
+
+  parameter_group_name = "default.mysql8.0"
+  apply_immediately    = true
+  monitoring_interval  = 60
+
+        
+
+
+
+
+
 }

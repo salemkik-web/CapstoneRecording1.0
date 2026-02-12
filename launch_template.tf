@@ -7,6 +7,9 @@ data "template_file" "userdata" {
     db_host     = aws_db_instance.wordpress.address
     alb_dns     = aws_lb.alb.dns_name
   }
+
+ depends_on = [aws_db_instance.wordpress, aws_lb.alb]
+
 }
 
 resource "aws_launch_template" "wp" {
@@ -22,6 +25,12 @@ resource "aws_launch_template" "wp" {
       Name = "wordpress-ec2"
     }
 }
+
+        lifecycle {
+    create_before_destroy = true
+  }
+        
+
 }
 
 

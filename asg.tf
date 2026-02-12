@@ -29,4 +29,17 @@ launch_template {
 
   # Optional: wait for instances to be healthy before finishing apply
   wait_for_capacity_timeout = "10m"
-}
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  depends_on = [
+    aws_launch_template.wp,
+    aws_lb_target_group.tg,
+  ]
+
+
+
+  }
+  
