@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 # Log everything for debugging
 exec > >(tee /var/log/user-data.log | logger -t user-data -s 2>/dev/console) 2>&1
 echo "==== Starting WordPress userdata script ===="
 
-# Install Apache, PHP, MySQL client
+# Update OS and install required packages
 yum update -y
+amazon-linux-extras enable php8.0 -y
+yum clean metadata
 yum install -y httpd mod_ssl php php-cli php-mysqlnd php-gd php-curl php-mbstring php-xml php-json wget unzip curl mariadb
 
 # Start and enable Apache
@@ -27,49 +30,92 @@ DB_PASSWORD="${db_password}"
 DB_HOST="${db_host}"
 ALB_DNS="${alb_dns}"
 
-# Wait for RDS to be reachable
-echo "Waiting for RDS at $DB_HOST..."
+# Wait for RDS to be reachable and create DB if needen
+
+max_retries=40
+count=0
 until mysql -h "$DB_HOST" -u "$DB_USER" -p"$DB_PASSWORD" -e "CREATE DATABASE IF NOT EXISTS $DB_NAME;" >/dev/null 2>&1; do
-  echo "$(date) - RDS not ready yet, retrying in 15s..."
+  count=$((count+1))
+  echo "$(date) - RDS not ready yet, retry $count/$max_retries..."
   sleep 15
+  if [ $count -ge $max_retries ]; then
+    echo "RDS not reachable after $((15*max_retries/60)) minutes. Exiting."
+    exit 1
+  fi
 done
-echo "RDS is ready!"
+
+
 
 # Navigate to web root
 cd /var/www/html
 
-# Download WordPress
-curl -fL https://wordpress.org/latest.tar.gz -o latest.tar.gz
+# Clean web root before WordPress installation
+rm -rf /var/www/html/*
+
+# Download WordPress with retries
+for i in {1..5}; do
+  curl -fL https://wordpress.org/latest.tar.gz -o latest.tar.gz && break
+  echo "Retry $i failed, waiting 10s..."
+  sleep 10
+  if [ $i -eq 5 ]; then
+    echo "Failed to download WordPress. Exiting."
+    exit 1
+  fi
+done
+
+# Extract WordPress and move files to web root
 tar -xzf latest.tar.gz
 rm -f latest.tar.gz
-rsync -av wordpress/ /var/www/html/
+rsync -av wordpress/ ./ 
 rm -rf wordpress
 
 # Configure wp-config.php
 cp wp-config-sample.php wp-config.php
+chmod 600 wp-config.php
 sed -i "s/database_name_here/$DB_NAME/" wp-config.php
 sed -i "s/username_here/$DB_USER/" wp-config.php
 sed -i "s/password_here/$DB_PASSWORD/" wp-config.php
 sed -i "s/localhost/$DB_HOST/" wp-config.php
 
-# Add WordPress salts
+
+
+# Add secure WordPress salts
 SALT_KEYS=$(curl -s https://api.wordpress.org/secret-key/1.1/salt/)
-sed -i "/AUTH_KEY/d" wp-config.php
+sed -i "/AUTH_KEY/,/NONCE_SALT/d" wp-config.php
 echo "$SALT_KEYS" >> wp-config.php
+
 
 # Install WP-CLI
 curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 chmod +x wp-cli.phar
 mv wp-cli.phar /usr/local/bin/wp
 
-# Set site URL via WP-CLI
-until wp option update siteurl "http://$ALB_DNS" --allow-root >/dev/null 2>&1; do
-  echo "$(date) - WP-CLI not ready yet, retrying in 10s..."
+# Wait until WP-CLI can connect to WordPress DB
+timeout=600
+elapsed=0
+until wp db check --allow-root >/dev/null 2>&1 || [ $elapsed -ge $timeout ]; do
+  echo "$(date) - WP-CLI DB not ready, retrying in 10s..."
+  sleep 10
+  elapsed=$((elapsed+10))
+done
+
+if [ $elapsed -ge $timeout ]; then
+  echo "WP-CLI could not connect to DB after 10 minutes. Exiting."
+  exit 1
+fi
+
+
+# Set site URL and home to ALB DNS
+
+for i in {1..10}; do
+  wp option update siteurl "http://$ALB_DNS" --allow-root && \
+  wp option update home "http://$ALB_DNS" --allow-root && break
+  echo "WP-CLI site/home not ready, retry $i..."
   sleep 10
 done
-wp option update home "http://$ALB_DNS" --allow-root
 
-# Set permissions
+
+# Set correct permissions
 chown -R apache:apache /var/www/html
 find /var/www/html -type d -exec chmod 755 {} \;
 find /var/www/html -type f -exec chmod 644 {} \;
@@ -77,4 +123,4 @@ find /var/www/html -type f -exec chmod 644 {} \;
 # Restart Apache
 systemctl restart httpd
 
-echo "==== WordPress userdata script completed! ===="
+echo "==== WordPress userdata script completed successfully! ===="

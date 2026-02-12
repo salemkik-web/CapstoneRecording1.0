@@ -1,18 +1,29 @@
 resource "aws_db_subnet_group" "main" {
   name       = "wordpress-db-subnet"
   subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]
+  tags = {
+    Name = "wordpress-db-subnet"
+  }
 }
 
 resource "aws_db_instance" "wordpress" {
   identifier              = "wordpress-db"
   engine                  = "mysql"
+  engine_version          = "8.4.7"              
   instance_class          = "db.t3.micro"
   allocated_storage       = 20
+  storage_type            = "gp2"               
   db_name                 = "wordpress"
   username                = var.db_username
   password                = var.db_password
   skip_final_snapshot     = true
-  db_subnet_group_name    = aws_db_subnet_group.main.name
-  vpc_security_group_ids  = [aws_security_group.rds_sg.id]
   publicly_accessible     = false
+  vpc_security_group_ids  = [aws_security_group.rds_sg.id]
+  db_subnet_group_name    = aws_db_subnet_group.main.name
+  multi_az                = false               # single AZ
+  auto_minor_version_upgrade = true
+
+  tags = {
+    Name = "wordpress-db"
+  }
 }

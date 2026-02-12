@@ -28,6 +28,11 @@ variable "myip" {
 }
 
 
+
+
+
 variable "key_name" {
-  default = "vockey"
+  description = "The AWS Key Pair name for SSH access"
+  type        = string
+  default     = "vockey"  
 }
