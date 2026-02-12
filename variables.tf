@@ -1,5 +1,13 @@
 variable "region" {
-  default = "us-east-1"
+  default = "us-west-2"
+}
+
+variable "availability_zone1" {
+  default = "us-west-2a"
+}
+
+variable "availability_zone2" {
+  default = "us-west-2b"
 }
 
 variable "vpc_cidr" {
@@ -12,4 +20,14 @@ variable "db_username" {
 
 variable "db_password" {
   default = "StrongPassword123!"
+}
+
+variable "myip" {
+  type    = string
+  default = "149.233.230.216/32"
+}
+
+
+variable "key_name" {
+  default = "vockey"
 }
