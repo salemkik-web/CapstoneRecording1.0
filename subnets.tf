@@ -5,7 +5,7 @@ resource "aws_subnet" "public_1" {
   availability_zone       = var.availability_zone1
   map_public_ip_on_launch = true
   tags = { Name = "public-1" }
-  depends_on = [aws_internet_gateway.main]
+ 
 
 }
 
@@ -15,7 +15,7 @@ resource "aws_subnet" "public_2" {
   availability_zone       = var.availability_zone2
   map_public_ip_on_launch = true
   tags = { Name = "public-2" }
-  depends_on = [aws_internet_gateway.main]
+ 
 
 }
 # Private subnets
