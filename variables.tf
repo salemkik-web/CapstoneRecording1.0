@@ -25,13 +25,10 @@ variable "db_password" {
 
 variable "myip" {     
   type    = string
-  default = "149.233.230.216/32"
+  default = "149.224.223.94/32"
+
+
 }
-
-
-
-
-
 variable "key_name" {
   description = "The AWS Key Pair name for SSH access"
   type        = string

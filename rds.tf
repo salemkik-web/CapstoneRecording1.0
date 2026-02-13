@@ -1,5 +1,5 @@
 resource "aws_db_subnet_group" "main" {
-  name       = "wordpress-db-subnet"
+  name       = "wordpress-db-subnet-new"
   subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]
   tags = {
     Name = "wordpress-db-subnet"

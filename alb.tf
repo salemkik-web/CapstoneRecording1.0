@@ -7,7 +7,6 @@ resource "aws_lb" "alb" {
   enable_deletion_protection = false    
   internal = false
   idle_timeout             = 60
-
   tags = {
     Name = "wp-alb"
   }
@@ -54,12 +53,6 @@ resource "aws_lb_listener" "listener" {
     aws_lb.alb,
     aws_lb_target_group.tg
   ]
-  provisioner "local-exec" {
-    command = "sleep 30"
-  }
-  
-  provisioner "local-exec" {
-  command = "aws elbv2 describe-target-health --target-group-arn ${aws_lb_target_group.tg.arn} --region us-west-2"
-}
+
 
 }
